@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive War on Drugs Timeline</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            color: #333;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+            font-size: 32px;
+        }
+        
+        .timeline-controls {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .era-button {
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: bold;
+        }
+        
+        .era-button:hover {
+            background-color: #375a8c;
+        }
+        
+        .era-button.active {
+            background-color: #263c5c;
+        }
+        
+        .category-filter {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-button {
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 500;
+        }
+        
+        .filter-button.policy {
+            background-color: #f5e6e6;
+            border: 2px solid #e63946;
+            color: #333;
+        }
+        
+        .filter-button.event {
+            background-color: #e6eff5;
+            border: 2px solid #457b9d;
+            color: #333;
+        }
+        
+        .filter-button.legacy {
+            background-color: #e6e7f5;
+            border: 2px solid #1d3557;
+            color: #333;
+        }
+        
+        .filter-button.active {
+            background-color: white;
+            font-weight: bold;
+        }
+        
+        .color-box {
+            width: 15px;
+            height: 15px;
+            display: inline-block;
+        }
+        
+        .policy-color {
+            background-color: #e63946;
+        }
+        
+        .event-color {
+            background-color: #457b9d;
+        }
+        
+        .legacy-color {
+            background-color: #1d3557;
+        }
+        
+        .timeline {
+            position: relative;
+            margin: 0 auto;
+            padding: 40px 0;
+        }
+        
+        .timeline::before {
+            content: '';
+            position: absolute;
+            height: 100%;
+            width: 4px;
+            background-color: #ccc;
+            left: 50px;
+            top: 0;
+        }
+        
+        .timeline-item {
+            margin-bottom: 30px;
+            position: relative;
+            display: flex;
+            transition: all 0.3s ease;
+        }
+        
+        .timeline-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            position: absolute;
+            left: 42px;
+            top: 15px;
+            transform: translateY(-50%);
+        }
+        
+        .timeline-content {
+            margin-left: 90px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: calc(100% - 90px);
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border-left: 5px solid #ccc;
+        }
+        
+        .timeline-content:hover {
+            transform: translateX(5px);
+        }
+        
+        .policy .timeline-dot {
+            background-color: #e63946;
+        }
+        
+        .event .timeline-dot {
+            background-color: #457b9d;
+        }
+        
+        .legacy .timeline-dot {
+            background-color: #1d3557;
+        }
+        
+        .policy .timeline-content {
+            border-left-color: #e63946;
+        }
+        
+        .event .timeline-content {
+            border-left-color: #457b9d;
+        }
+        
+        .legacy .timeline-content {
+            border-left-color: #1d3557;
+        }
+        
+        .timeline-date {
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .timeline-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .timeline-description {
+            color: #555;
+            line-height: 1.5;
+        }
+        
+        .expanded .timeline-description {
+            display: block;
+        }
+        
+        .timeline-item.hidden {
+            display: none;
+        }
+        
+        .timeline-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .timeline-content.expanded .timeline-details {
+            max-height: 500px;
+        }
+        
+        .timeline-impact {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #ddd;
+            font-style: italic;
+            color: #666;
+        }
+        
+        .expand-icon {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #f5f5f5;
+            border-radius: 50%;
+        }
+        
+        .expand-icon::before,
+        .expand-icon::after {
+            content: '';
+            position: absolute;
+            background-color: #666;
+            transition: transform 0.3s;
+        }
+        
+        .expand-icon::before {
+            width: 12px;
+            height: 2px;
+        }
+        
+        .expand-icon::after {
+            width: 2px;
+            height: 12px;
+        }
+        
+        .timeline-content.expanded .expand-icon::after {
+            transform: rotate(90deg);
+        }
+        
+        .no-results {
+            text-align: center;
+            padding: 30px;
+            font-size: 18px;
+            color: #666;
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .timeline::before {
+                left: 30px;
+            }
+            .timeline-dot {
+                left: 22px;
+            }
+            .timeline-content {
+                margin-left: 60px;
+                width: calc(100% - 60px);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>The War on Drugs Timeline (1968-2008)</h1>
+        
+        <div class="timeline-controls">
+            <button class="era-button active" data-era="all">All Eras</button>
+            <button class="era-button" data-era="1960s">1960s</button>
+            <button class="era-button" data-era="1980s">1980s</button>
+            <button class="era-button" data-era="1990s">1990s</button>
+            <button class="era-button" data-era="2000s">2000s</button>
+            <button class="era-button" data-era="legacy">Legacy</button>
+        </div>
+        
+        <div class="category-filter">
+            <button class="filter-button policy active" data-category="policy">
+                <span class="color-box policy-color"></span>
+                Policy/Legal Changes
+            </button>
+            <button class="filter-button event active" data-category="event">
+                <span class="color-box event-color"></span>
+                Key Events
+            </button>
+            <button class="filter-button legacy active" data-category="legacy">
+                <span class="color-box legacy-color"></span>
+                Legacy
+            </button>
+        </div>
+        
+        <div class="timeline">
+            <!-- 1968 -->
+            <div class="timeline-item policy" data-era="1960s">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="expand-icon"></div>
+                    <div class="timeline-date">1968</div>
+                    <div class="timeline-title">Terry v. Ohio</div>
+                    <div class="timeline-description">Supreme Court introduces the concept of "reasonable articulable suspicion," allowing police to stop and frisk individuals even without probable cause, provided they reasonably believe the person is dangerous and involved in criminal activity.</div>
+                    <div class="timeline-details">
+                        <div class="timeline-impact">Impact: This decision lowered the bar for police intervention and would later become a key tool in drug enforcement strategies.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 1980s -->
+            <div class="timeline-item event" data-era="1980s">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="expand-icon"></div>
+                    <div class="timeline-date">Early-Mid 1980s</div>
+                    <div class="timeline-title">Emergence of Crack Cocaine</div>
+                    <div class="timeline-description">Crack cocaine becomes known in some impoverished neighborhoods in Los Angeles, New York, and Miami.</div>
+                    <div class="timeline-details">
+                        <div class="timeline-impact">Impact: The emergence of crack cocaine would become a focal point for drug enforcement policies and media coverage, leading to harsher penalties specifically targeting crack versus powder cocaine.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-item policy" data-era="1980s">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="expand-icon"></div>
+                    <div class="timeline-date">1980s</div>
+                    <div class="timeline-title">Reagan Administration Drug Policies</div>
+                    <div class="timeline-description">The Reagan administration aggressively publicizes "crack horror stories," contributing to a drug scare and increased focus on drug enforcement.</div>
+                    <div class="timeline-details">
+                        <div class="timeline-impact">Impact: These policies led to a dramatic increase in paramilitary drug raids from a few hundred per year to thousands, and the percentage of drug arrests resulting in prison sentences quadrupled.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-item policy" data-era="1980s">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="expand-icon"></div>
+                    <div class="timeline-date">1980s</div>
+                    <div class="timeline-title">Prison Building Boom</div>
+                    <div class="timeline-description">The number of people incarcerated in prisons and jails begins to soar dramatically.</div>
+                    <div class="timeline-details">
+                        <div class="timeline-impact">Impact: This period marks the beginning of mass incarceration as a defining feature of American criminal justice policy.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-item event" data-era="1980s">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="expand-icon"></div>
+                    <div class="timeline-date">1985-1986</div>
+                    <div class="timeline-title">Media Coverage of Crack</div>
+                    <div class="timeline-description">The New York Times makes the national media's first specific reference to crack in a story published in late 1985.</div>
+                    <div class="timeline-details">
+                        <div class="timeline-impact">Impact: Media coverage contributed significantly to public fear and political pressure for harsher drug policies.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-item event" data-era="1980s">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="expand-icon"></div>
+                    <div class="timeline-date">1988</div>
+                    <div class="timeline-title">Clinton Drake Arrested</div>
+                    <div class="timeline-description">Clinton Drake, a 55-year-old African American man in Montgomery, Alabama, was arrested for possession of marijuana.</div>
+                    <div class="timeline-details">
+                        <div class="timeline-impact">Impact: Individual cases like Drake's illustrate the personal impact of increased drug enforcement on individuals, particularly in communities of color.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 1990s -->
+            <div class="timeline-item policy" data-era="1990s">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="expand-icon"></div>
+                    <div class="timeline-date">Early 1990s</div>
+                    <div class="timeline-title">Florida v. Bostick</div>
+                    <div class="timeline-description">Supreme Court upholds suspicionless police sweeps of buses, allowing officers to ask for consent to search luggage without informing passengers of their right to remain silent.</div>
+                    <div class="timeline-details">
+                        <div class="timeline-impact">Impact: This ruling expanded police powers for drug interdiction without requiring reasonable suspicion.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-item policy" data-era="1990s">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="expand-icon"></div>
+                    <div class="timeline-date">1990s</div>
+                    <div class="timeline-title">Clinton Administration and Drug Policy</div>
+                    <div class="timeline-description">The Clinton administration increases federal funding for drug control and enforcement initiatives.</div>
+                    <div class="timeline-details">
+                        <div class="timeline-impact">Impact: Despite being a Democratic administration, Clinton's policies continued and in some ways expanded the War on Drugs initiated by Republican predecessors.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-item policy" data-era="1990s">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="expand-icon"></div>
+                    <div class="timeline-date">1996</div>
+                    <div class="timeline-title">Clinton's "One Strike" Policy</div>
+                    <div class="timeline-description">President Clinton declares public housing agencies should exercise no discretion when a tenant or guest engages in criminal activity, particularly if it is drug-related.</div>
+                    <div class="timeline-details">
+                        <div class="timeline-impact">Impact: This policy led to evictions of entire families from public housing based on drug allegations, even when the accused family member was not a resident.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-item event" data-era="1990s">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="expand-icon"></div>
+                    <div class="timeline-date">1997</div>
+                    <div class="timeline-title">Pentagon Equipment Giveaway</div>
+                    <div class="timeline-description">The Pentagon handed over more than 1.2 million pieces of military equipment to local police departments.</div>
+                    <div class="timeline-details">
+                        <div class="timeline-impact">Impact: This program contributed to the militarization of police forces across the country, particularly for drug enforcement operations.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 2000s -->
+            <div class="timeline-item policy" data-era="2000s">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="expand-icon"></div>
+                    <div class="timeline-date">2000</div>
+                    <div class="timeline-title">Mass Incarceration Milestone</div>
+                    <div class="timeline-description">The number of people incarcerated in the nation's prisons and jails soars from roughly 300,000 to more than 2 million.</div>
+                    <div class="timeline-details">
+                        <div class="timeline-impact">Impact: The United States becomes the world leader in incarceration rates, with drug offenses comprising a substantial portion of incarcerations.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-item policy" data-era="2000s">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="expand-icon"></div>
+                    <div class="timeline-date">2002</div>
+                    <div class="timeline-title">Department of Housing and Urban Development v. Rucker</div>
+                    <div class="timeline-description">Supreme Court ruled against the Ninth Circuit Court of Appeals striking down the "no-fault" clause, upholding public housing evictions.</div>
+                    <div class="timeline-details">
+                        <div class="timeline-impact">Impact: This decision cemented the ability of public housing authorities to evict entire families for drug activity by any household member or guest, even if other residents were unaware of the activity.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-item policy" data-era="2000s">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="expand-icon"></div>
+                    <div class="timeline-date">2007</div>
+                    <div class="timeline-title">Correctional Control Expansion</div>
+                    <div class="timeline-description">More than 7 million Americans (1 in every 31 adults) are behind bars, on probation, or on parole.</div>
+                    <div class="timeline-details">
+                        <div class="timeline-impact">Impact: This statistic demonstrates the unprecedented scale of the criminal justice system's reach in American society.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-item policy" data-era="2000s">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="expand-icon"></div>
+                    <div class="timeline-date">2008</div>
+                    <div class="timeline-title">Incarceration Statistics</div>
+                    <div class="timeline-description">Approximately 2.3 million people are in prisons and jails, and a staggering 5.1 million people are on probation or parole.</div>
+                    <div class="timeline-details">
+                        <div class="timeline-impact">Impact: These numbers establish the United States as having both the highest incarceration rate and the largest prison population in the world.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Legacy -->
+            <div class="timeline-item legacy" data-era="legacy">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="expand-icon"></div>
+                    <div class="timeline-date">Ongoing Impact</div>
+                    <div class="timeline-title">Legalized Discrimination</div>
+                    <div class="timeline-description">People labeled as felons face legal discrimination in housing, employment, education, and public benefits.</div>
+                    <div class="timeline-details">
+                        <div class="timeline-impact">Impact: These legal barriers create a permanent underclass of citizens who have served their sentences but continue to be punished through systemic exclusion.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-item legacy" data-era="legacy">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="expand-icon"></div>
+                    <div class="timeline-date">Ongoing Impact</div>
+                    <div class="timeline-title">Racial Disparities</div>
+                    <div class="timeline-description">The "War on Drugs" disproportionately affects communities of color, leading to mass incarceration of African Americans.</div>
+                    <div class="timeline-details">
+                        <div class="timeline-impact">Impact: Despite similar rates of drug use across racial groups, Black and Brown communities face significantly higher rates of arrest, prosecution, and incarceration for drug offenses.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-item legacy" data-era="legacy">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="expand-icon"></div>
+                    <div class="timeline-date">Ongoing Impact</div>
+                    <div class="timeline-title">Community Impact</div>
+                    <div class="timeline-description">Mass incarceration leads to broken families, poverty, unemployment, and distrust within communities of color.</div>
+                    <div class="timeline-details">
+                        <div class="timeline-impact">Impact: Entire neighborhoods face the consequences of mass incarceration through decreased economic opportunity, family separation, and fractured community bonds.</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="timeline-item legacy" data-era="legacy">
+                <div class="timeline-dot"></div>
+                <div class="timeline-content">
+                    <div class="expand-icon"></div>
+                    <div class="timeline-date">Ongoing Impact</div>
+                    <div class="timeline-title">The "Prison Label"</div>
+                    <div class="timeline-description">The stigma associated with a felony conviction creates a permanent undercaste and hinders social mobility.</div>
+                    <div class="timeline-details">
+                        <div class="timeline-impact">Impact: Even after completing sentences, formerly incarcerated individuals face a lifetime of social exclusion and discrimination, perpetuating cycles of poverty and marginalization.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="no-results">No events match your current filter selections.</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const timelineItems = document.querySelectorAll('.timeline-item');
+            const eraButtons = document.querySelectorAll('.era-button');
+            const filterButtons = document.querySelectorAll('.filter-button');
+            const noResults = document.querySelector('.no-results');
+            const timelineContents = document.querySelectorAll('.timeline-content');
+            
+            // Toggle timeline item expansion
+            timelineContents.forEach(content => {
+                content.addEventListener('click', function() {
+                    this.classList.toggle('expanded');
+                });
+            });
+            
+            // Era filter functionality
+            eraButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Update active button
+                    eraButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    filterItems();
+                });
+            });
+            
+            // Category filter functionality
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // Toggle active state
+                    this.classList.toggle('active');
+                    
+                    filterItems();
+                });
+            });
+            
+            function filterItems() {
+                const activeEra = document.querySelector('.era-button.active').dataset.era;
+                const activeCategories = Array.from(document.querySelectorAll('.filter-button.active')).map(btn => btn.dataset.category);
+                
+                let visibleCount = 0;
+                
+                timelineItems.forEach(item => {
+                    const itemEra = item.dataset.era;
+                    const itemCategory = item.classList[1]; // policy, event, or legacy
+                    
+                    const matchesEra = activeEra === 'all' || itemEra === activeEra;
+                    const matchesCategory = activeCategories.includes(itemCategory);
+                    
+                    if (matchesEra && matchesCategory) {
+                        item.classList.remove('hidden');
+                        visibleCount++;
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+                
+                // Show "no results" message if needed
+                if (visibleCount === 0) {
+                    noResults.style.display = 'block';
+                } else {
+                    noResults.style.display = 'none';
+                }
+            }
+        });
+    </script>
+</body>
+</html>
